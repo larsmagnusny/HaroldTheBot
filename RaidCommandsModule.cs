@@ -99,9 +99,9 @@ Example: raid remove " + Guid.NewGuid();
 				/* Send the message "I'm Alive!" to the channel the message was recieved from */
 				var ev = RaidStorage.AddRaid(title.Trim('"'), starttime);
 				var Msg = await ctx.RespondAsync(ev.CreateMessage());
-				ev.Message = Msg;
+				ev.SetMessage(Msg);
 				ev.MessageId = ev.MessageId;
-				ev.Channel = Msg.Channel;
+				ev.SetChannel(Msg.Channel);
 				ev.ChannelId = Msg.ChannelId;
 				return;
 			}

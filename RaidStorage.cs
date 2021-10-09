@@ -62,141 +62,51 @@ namespace HaroldTheBot
         }
         public Guid Id { get; set; }
         public ulong? MessageId { get; set; }
-        public DiscordMessage Message { get; set; }
+        private DiscordMessage message;
+
+        public async Task<DiscordMessage> GetMessage()
+        {
+            var channel = await GetChannel();
+            if (message == null && MessageId.HasValue)
+            {
+                message = await channel.GetMessageAsync(MessageId.Value);
+            }
+
+            return message;
+        }
+
+        public void SetMessage(DiscordMessage _message)
+        {
+            message = _message;
+        }
+
+
         public ulong? ChannelId { get; set; }
-        public DiscordChannel Channel { get; set; }
+        private DiscordChannel channel;
+        
+        public async Task<DiscordChannel> GetChannel()
+        {
+            if (channel == null && ChannelId.HasValue)
+            {
+                channel = await Program.DiscordClient.GetChannelAsync(ChannelId.Value);
+            }
+
+            return channel;
+        }
+
+        public void SetChannel(DiscordChannel _channel)
+        {
+            channel = _channel;
+        }
+
         public string Title { get; set; }
         public Dictionary<ulong, RaidParticipant> Participants { get; set; }
         public DateTime EventStart { get; set; }
+        public bool Notified { get; set; }
         public bool Expired { get; set; }
         public int TankLimit { get; set; }
         public int DPSLimit { get; set; }
         public int HealerLimit { get; set; }
-
-        public void LoadTestData()
-        {
-            Participants.Clear();
-
-            Participants.Add(0, new RaidParticipant
-            {
-                Role = Job.WAR,
-                Username = Utils.GenerateRandomAlphanumericString()
-            });
-
-            Participants.Add(1, new RaidParticipant
-            {
-                Role = Job.MNK,
-                Username = Utils.GenerateRandomAlphanumericString()
-            });
-
-            Participants.Add(2, new RaidParticipant
-            {
-                Role = Job.WHM,
-                Username = Utils.GenerateRandomAlphanumericString()
-            });
-
-            Participants.Add(3, new RaidParticipant
-            {
-                Role = Job.ARC,
-                Username = Utils.GenerateRandomAlphanumericString()
-            });
-
-            Participants.Add(4, new RaidParticipant
-            {
-                Role = Job.BLM,
-                Username = Utils.GenerateRandomAlphanumericString()
-            });
-
-            Participants.Add(5, new RaidParticipant
-            {
-                Role = Job.WAR,
-                Username = Utils.GenerateRandomAlphanumericString()
-            });
-
-            Participants.Add(6, new RaidParticipant
-            {
-                Role = Job.MNK,
-                Username = Utils.GenerateRandomAlphanumericString()
-            });
-
-            Participants.Add(7, new RaidParticipant
-            {
-                Role = Job.WHM,
-                Username = Utils.GenerateRandomAlphanumericString()
-            });
-
-            Participants.Add(8, new RaidParticipant
-            {
-                Role = Job.ARC,
-                Username = Utils.GenerateRandomAlphanumericString()
-            });
-
-            Participants.Add(9, new RaidParticipant
-            {
-                Role = Job.BLM,
-                Username = Utils.GenerateRandomAlphanumericString()
-            });
-
-            Participants.Add(10, new RaidParticipant
-            {
-                Role = Job.WAR,
-                Username = Utils.GenerateRandomAlphanumericString()
-            });
-
-            Participants.Add(11, new RaidParticipant
-            {
-                Role = Job.MNK,
-                Username = Utils.GenerateRandomAlphanumericString()
-            });
-
-            Participants.Add(12, new RaidParticipant
-            {
-                Role = Job.WHM,
-                Username = Utils.GenerateRandomAlphanumericString()
-            });
-
-            Participants.Add(13, new RaidParticipant
-            {
-                Role = Job.ARC,
-                Username = Utils.GenerateRandomAlphanumericString()
-            });
-
-            Participants.Add(14, new RaidParticipant
-            {
-                Role = Job.BLM,
-                Username = Utils.GenerateRandomAlphanumericString()
-            });
-
-            Participants.Add(15, new RaidParticipant
-            {
-                Role = Job.WAR,
-                Username = Utils.GenerateRandomAlphanumericString()
-            });
-
-            Participants.Add(16, new RaidParticipant
-            {
-                Role = Job.MNK,
-                Username = Utils.GenerateRandomAlphanumericString()
-            });
-
-            Participants.Add(17, new RaidParticipant
-            {
-                Role = Job.WHM,
-                Username = Utils.GenerateRandomAlphanumericString()
-            });
-
-            Participants.Add(18, new RaidParticipant
-            {
-                Role = Job.ARC,
-                Username = Utils.GenerateRandomAlphanumericString()
-            });
-
-            Participants.Add(19, new RaidParticipant
-            {
-                Role = Job.BLM,
-                Username = Utils.GenerateRandomAlphanumericString()
-            });
-        }
 
         public string RenderParticipants()
         {
@@ -377,25 +287,20 @@ namespace HaroldTheBot
 
         public async Task<DiscordMessage> UpdateMessage()
         {
-            if(Message == null && MessageId.HasValue)
+            var message = await GetMessage();
+            if (message != null)
             {
-                if(ChannelId.HasValue)
-                    Channel = await Program.DiscordClient.GetChannelAsync(ChannelId.Value);
-
-                if (MessageId.HasValue)
-                    Message = await Channel.GetMessageAsync(MessageId.Value);
-            }
-
-            if (Message != null)
-            {
-                return await Message.ModifyAsync(CreateMessage());
+                return await message.ModifyAsync(CreateMessage());
             }
             return null;
         }
 
         public async Task DeleteMessage()
         {
-            await Message.DeleteAsync();
+            var message = await GetMessage();
+
+            if(message != null)
+                await message.DeleteAsync();
         }
     }
 
@@ -412,8 +317,7 @@ namespace HaroldTheBot
             {
                 Id = guid,
                 Title = title,
-                EventStart = eventStart,
-                Message = null
+                EventStart = eventStart
             };
 
             lock (eventLock)
@@ -588,10 +492,28 @@ namespace HaroldTheBot
 
     public static class RaidMonitorer
     {
-        public static void Run()
+        public static DiscordRole GetSurgeonRole()
+        {
+            DiscordRole surgeon = null;
+
+            foreach (var guild in Program.DiscordClient.Guilds)
+            {
+                foreach (var role in guild.Value.Roles)
+                {
+                    if (role.Value.Name == "Surgeon")
+                        surgeon = role.Value;
+                }
+            }
+
+            return surgeon;
+        }
+
+        public static async void Run()
         {
             while (true)
             {
+                RaidEvent raidToNotify = null;
+
                 lock (RaidStorage.eventLock)
                 {
                     var raids = RaidStorage.GetRaids();
@@ -599,6 +521,7 @@ namespace HaroldTheBot
                     if (raids != null)
                     {
                         var now = DateTime.UtcNow;
+                        var thirtyMinutesAgo = DateTime.UtcNow.AddMinutes(-10);
 
                         foreach (var raid in raids)
                         {
@@ -606,10 +529,29 @@ namespace HaroldTheBot
                                 continue;
 
                             raid.Expired = raid.EventStart < now;
+
+                            if (!raid.Notified) {
+                                raid.Notified = raid.EventStart < thirtyMinutesAgo;
+
+                                if (raid.Notified)
+                                {
+                                    raidToNotify = raid;
+                                }
+                            }
+
                             if(raid.Expired)
                                 _ = raid.UpdateMessage();
                         }
                     }
+                }
+
+                if(raidToNotify != null)
+                {
+                    var surgeon = GetSurgeonRole();
+
+                    var channel = await raidToNotify.GetChannel();
+
+                    await channel.SendMessageAsync($"{surgeon.Mention} the raid {raidToNotify.Title} starts in ten minutes");
                 }
 
                 Thread.Sleep(1000);
@@ -648,7 +590,6 @@ namespace HaroldTheBot
             lock (RaidStorage.eventLock)
             {
                 ev = RaidStorage.GetRaid(guid);
-                ev.Message = message;
 
                 DiscordMember member = null;
                 string NickName = e.User.Username;
@@ -698,7 +639,7 @@ namespace HaroldTheBot
             lock (RaidStorage.eventLock)
             {
                 ev = RaidStorage.GetRaid(guid);
-                ev.Message = message;
+
                 DiscordMember member = null;
                 string NickName = e.User.Username;
 
@@ -729,8 +670,8 @@ namespace HaroldTheBot
                 });
             }
 
-            if(emojiToRemove != null)
-                await ev.Message.DeleteReactionAsync(emojiToRemove, e.User);
+            if(emojiToRemove != null && message != null)
+                await message.DeleteReactionAsync(emojiToRemove, e.User);
 
             await e.Message.ModifyAsync(ev.CreateMessage());
         }
