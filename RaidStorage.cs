@@ -496,7 +496,7 @@ namespace HaroldTheBot
         {
             DiscordRole surgeon = null;
 
-            if (Program.DiscordClient.Guilds == null)
+            if (Program.DiscordClient != null && Program.DiscordClient.Guilds == null)
                 return null;
 
             foreach (var guild in Program.DiscordClient.Guilds)
@@ -550,6 +550,11 @@ namespace HaroldTheBot
 
                 if(raidToNotify != null)
                 {
+                    while (GetSurgeonRole() == null)
+                    {
+                        Thread.Sleep(1000);
+                    }
+
                     var surgeon = GetSurgeonRole();
 
                     var channel = await raidToNotify.GetChannel();
