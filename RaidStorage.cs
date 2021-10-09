@@ -535,6 +535,11 @@ namespace HaroldTheBot
 
                             raid.Expired = raid.EventStart < now;
 
+                            if (raid.Expired)
+                            {
+                                raid.Notified = true;
+                                _ = raid.UpdateMessage();
+                            }
                             if (!raid.Notified) {
                                 raid.Notified = raid.EventStart < thirtyMinutesAgo;
 
@@ -544,8 +549,7 @@ namespace HaroldTheBot
                                 }
                             }
 
-                            if(raid.Expired)
-                                _ = raid.UpdateMessage();
+                            
                         }
                     }
                 }
