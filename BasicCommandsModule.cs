@@ -32,6 +32,17 @@ namespace HaroldTheBot
             await ctx.RespondAsync("I'm alive!");
         }
 
+        [Command("roll")]
+        [Description("Roll a random number")]
+        public async Task Roll(CommandContext ctx)
+        {
+            await ctx.TriggerTypingAsync();
+
+            Random random = new Random((int)DateTimeOffset.UtcNow.ToUnixTimeSeconds());
+
+            await ctx.RespondAsync($"{random.Next(101)}");
+        }
+
         [Command("surgeon")]
         [Description("Mention surgeons")]
         public async Task Surgeon(CommandContext ctx)
