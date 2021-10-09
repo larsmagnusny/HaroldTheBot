@@ -551,7 +551,7 @@ namespace HaroldTheBot
 
                     var channel = await raidToNotify.GetChannel();
 
-                    await channel.SendMessageAsync($"{surgeon.Mention} the raid {raidToNotify.Title} starts in ten minutes");
+                    await channel.SendMessageAsync($"{surgeon.Mention} the raid {raidToNotify.Title} starts in ten minutes. \n{RandomPhrases.GetRandomBattleString()}");
                 }
 
                 Thread.Sleep(1000);
