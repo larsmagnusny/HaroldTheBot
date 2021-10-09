@@ -496,7 +496,9 @@ namespace HaroldTheBot
         {
             DiscordRole surgeon = null;
 
-            if (Program.DiscordClient != null && Program.DiscordClient.Guilds == null)
+            if (Program.DiscordClient == null)
+                return null;
+            if (Program.DiscordClient.Guilds == null)
                 return null;
 
             foreach (var guild in Program.DiscordClient.Guilds)
