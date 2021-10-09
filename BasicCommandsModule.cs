@@ -3,9 +3,14 @@ using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
 using DSharpPlus.Interactivity;
 using HaroldTheBot;
+using HaroldTheBot.IP;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
+using System.Net;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -23,6 +28,26 @@ public class BasicCommandsModule : BaseCommandModule
 
         /* Send the message "I'm Alive!" to the channel the message was recieved from */
         await ctx.RespondAsync("I'm alive!");
+    }
+
+    [Command("whereareyou")]
+    [Description("A command to locate the bot and which operating system it is running on")]
+    public async Task WhereAreYou(CommandContext ctx)
+    {
+        await ctx.TriggerTypingAsync();
+
+        var nameAndVersion = RuntimeInformation.OSDescription;
+        var architecture = RuntimeInformation.OSArchitecture;
+        var framework = RuntimeInformation.FrameworkDescription;
+
+        string info = new WebClient().DownloadString("http://ipinfo.io");
+
+        IpInfo ipInfo = JsonConvert.DeserializeObject<IpInfo>(info);
+
+        RegionInfo region = new RegionInfo(ipInfo.Country);
+
+        await ctx.RespondAsync($"Hello! I am in {region.EnglishName}. \r\nI'm running on {nameAndVersion} {architecture} {framework}");
+
     }
 
     [Command("clear")]
