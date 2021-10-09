@@ -32,6 +32,29 @@ namespace HaroldTheBot
             await ctx.RespondAsync("I'm alive!");
         }
 
+        [Command("surgeon")]
+        [Description("Mention surgeons")]
+        public async Task Surgeon(CommandContext ctx)
+        {
+            await ctx.TriggerTypingAsync();
+
+            var guilds = ctx.Client.Guilds;
+
+            DiscordRole surgeon = null;
+
+            foreach(var item in guilds)
+            {
+                foreach(var role in item.Value.Roles)
+                {
+                    if (role.Value.Name == "Surgeon")
+                        surgeon = role.Value;
+                }
+            }
+
+            if(surgeon != null)
+                await ctx.RespondAsync(surgeon.Mention);
+        }
+
         [Command("whereareyou")]
         [Description("A command to locate the bot and which operating system it is running on")]
         public async Task WhereAreYou(CommandContext ctx)
