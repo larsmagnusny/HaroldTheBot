@@ -650,23 +650,24 @@ namespace HaroldTheBot
                 ev = RaidStorage.GetRaid(guid);
                 ev.Message = message;
 
-                e.User.Presence.Guild.Members.TryGetValue(e.User.Id, out DiscordMember member);
-
+                DiscordMember member = null;
                 string NickName = e.User.Username;
 
-                if (!string.IsNullOrEmpty(member.Nickname))
+                if (e.User.Presence == null)
+                    member = null;
+                else if(e.User.Presence.Guild != null)
+                    e.User.Presence.Guild.Members.TryGetValue(e.User.Id, out member);
+
+                if (member != null && !string.IsNullOrEmpty(member.Nickname))
                     NickName = member.Nickname;
 
-                if (member != null)
-                {
-                    if (!ev.Participants.ContainsKey(e.User.Id))
-                        return;
+                if (!ev.Participants.ContainsKey(e.User.Id))
+                    return;
 
-                    RaidParticipant participant = ev.Participants[e.User.Id];
+                RaidParticipant participant = ev.Participants[e.User.Id];
 
-                    if(participant.Role.ToString() == e.Emoji.Name.Trim(':'))
-                        ev.Participants.Remove(e.User.Id);
-                }
+                if(participant.Role.ToString() == e.Emoji.Name.Trim(':'))
+                    ev.Participants.Remove(e.User.Id);
             }
 
             await e.Message.ModifyAsync(ev.CreateMessage());
@@ -698,36 +699,34 @@ namespace HaroldTheBot
             {
                 ev = RaidStorage.GetRaid(guid);
                 ev.Message = message;
+                DiscordMember member = null;
+                string NickName = e.User.Username;
 
+                if (e.User.Presence == null)
+                    member = null;
+                else if(e.User.Presence.Guild != null)
+                    e.User.Presence.Guild.Members.TryGetValue(e.User.Id, out member);
 
-                e.User.Presence.Guild.Members.TryGetValue(e.User.Id, out DiscordMember member);
+                if (!Enum.TryParse(typeof(Job), e.Emoji.Name.Trim(':'), out object job))
+                    return;
 
-                if (member != null)
+                if (member != null && !string.IsNullOrEmpty(member.Nickname))
+                    NickName = member.Nickname;
+
+                if (ev.Participants.ContainsKey(e.User.Id))
                 {
+                    var prevParticipation = ev.Participants[e.User.Id];
 
-                    if (!Enum.TryParse(typeof(Job), e.Emoji.Name.Trim(':'), out object job))
-                        return;
+                    emojiToRemove = DiscordEmoji.FromName(Program.DiscordClient, string.Concat(":", prevParticipation.Role.ToString(), ":"));
 
-                    string NickName = e.User.Username;
-
-                    if (!string.IsNullOrEmpty(member.Nickname))
-                        NickName = member.Nickname;
-
-                    if (ev.Participants.ContainsKey(e.User.Id))
-                    {
-                        var prevParticipation = ev.Participants[e.User.Id];
-
-                        emojiToRemove = DiscordEmoji.FromName(Program.DiscordClient, string.Concat(":", prevParticipation.Role.ToString(), ":"));
-
-                        ev.Participants.Remove(e.User.Id);
-                    }
-
-                    ev.Participants.Add(e.User.Id, new RaidParticipant
-                    {
-                        Role = (Job)job,
-                        Username = NickName
-                    });
+                    ev.Participants.Remove(e.User.Id);
                 }
+
+                ev.Participants.Add(e.User.Id, new RaidParticipant
+                {
+                    Role = (Job)job,
+                    Username = NickName
+                });
             }
 
             if(emojiToRemove != null)
