@@ -68,6 +68,7 @@ namespace HaroldTheBot
         public string Title { get; set; }
         public Dictionary<ulong, RaidParticipant> Participants { get; set; }
         public DateTime EventStart { get; set; }
+        public bool Expired { get; set; }
         public int TankLimit { get; set; }
         public int DPSLimit { get; set; }
         public int HealerLimit { get; set; }
@@ -199,25 +200,25 @@ namespace HaroldTheBot
 
         public string RenderParticipants()
         {
-            StringBuilder builder = new StringBuilder();
+            StringBuilder builder = new();
 
-            Queue<RaidParticipant> tanks = new Queue<RaidParticipant>();
-            Queue<RaidParticipant> melees = new Queue<RaidParticipant>();
-            Queue<RaidParticipant> healers = new Queue<RaidParticipant>();
-            Queue<RaidParticipant> ranged = new Queue<RaidParticipant>();
-            Queue<RaidParticipant> magicals = new Queue<RaidParticipant>();
+            Queue<RaidParticipant> tanks = new();
+            Queue<RaidParticipant> melees = new();
+            Queue<RaidParticipant> healers = new();
+            Queue<RaidParticipant> ranged = new();
+            Queue<RaidParticipant> magicals = new();
 
             foreach(var item in Participants.OrderBy(o => o.Value.Role))
             {
-                if (Utils.isTank(item.Value.Role))
+                if (Utils.IsTank(item.Value.Role))
                     tanks.Enqueue(item.Value);
-                if (Utils.isMeleeDPS(item.Value.Role))
+                if (Utils.IsMeleeDPS(item.Value.Role))
                     melees.Enqueue(item.Value);
-                if (Utils.isHealer(item.Value.Role))
+                if (Utils.IsHealer(item.Value.Role))
                     healers.Enqueue(item.Value);
-                if (Utils.isRangedDPS(item.Value.Role))
+                if (Utils.IsRangedDPS(item.Value.Role))
                     ranged.Enqueue(item.Value);
-                if (Utils.isMagicDPS(item.Value.Role))
+                if (Utils.IsMagicDPS(item.Value.Role))
                     magicals.Enqueue(item.Value);
             }
 
@@ -227,14 +228,14 @@ namespace HaroldTheBot
             builder.Append(DiscordEmoji.FromName(Program.DiscordClient, ":TANK:"));
             builder.Append(TankColumn);
 
-            for (int i = 0; i < columnLimit - Utils.countSpaces(TankColumn) - 7; i++)
-                builder.Append(" ");
+            for (int i = 0; i < columnLimit - Utils.CountSpaces(TankColumn) - 7; i++)
+                builder.Append(' ');
 
             string DPSColumn = $" DPS {melees.Count + ranged.Count + magicals.Count}/{DPSLimit}";
             builder.Append(DiscordEmoji.FromName(Program.DiscordClient, ":DPS:"));
             builder.Append(DPSColumn);
-            for (int i = 0; i < columnLimit - Utils.countSpaces(DPSColumn) - 8; i++)
-                builder.Append(" ");
+            for (int i = 0; i < columnLimit - Utils.CountSpaces(DPSColumn) - 8; i++)
+                builder.Append(' ');
 
             string HealerColumn = $" Healers {healers.Count}/{HealerLimit}";
             builder.Append(DiscordEmoji.FromName(Program.DiscordClient, ":HEALER:"));
@@ -244,23 +245,23 @@ namespace HaroldTheBot
             TankColumn = $" Tank ({tanks.Count})";
             builder.Append(DiscordEmoji.FromName(Program.DiscordClient, ":TANK:"));
             builder.Append(TankColumn);
-            for (int i = 0; i < columnLimit - Utils.countSpaces(TankColumn) - 7; i++)
-                builder.Append(" ");
+            for (int i = 0; i < columnLimit - Utils.CountSpaces(TankColumn) - 7; i++)
+                builder.Append(' ');
 
             DPSColumn = $" Melee ({melees.Count})";
             builder.Append(DiscordEmoji.FromName(Program.DiscordClient, ":MELEE:"));
             builder.Append(DPSColumn);
-            for (int i = 0; i < columnLimit - Utils.countSpaces(DPSColumn) - 8; i++)
-                builder.Append(" ");
+            for (int i = 0; i < columnLimit - Utils.CountSpaces(DPSColumn) - 8; i++)
+                builder.Append(' ');
 
             HealerColumn = $" Healer ({healers.Count})";
             builder.Append(DiscordEmoji.FromName(Program.DiscordClient, ":HEALER:"));
             builder.Append(HealerColumn);
-            builder.Append("\n");
+            builder.Append('\n');
 
             RaidParticipant participant;
 
-            List<RaidParticipant> rowToDraw = new List<RaidParticipant>();
+            List<RaidParticipant> rowToDraw = new();
 
             while(tanks.Count > 0 || melees.Count > 0 || healers.Count > 0)
             {
@@ -285,10 +286,10 @@ namespace HaroldTheBot
                 if(p == null)
                 {
                     for (int i = 0; i < columnLimit; i++)
-                        builder.Append(" ");
+                        builder.Append(' ');
 
                     if (counter++ % 3 == 0)
-                        builder.Append("\n");
+                        builder.Append('\n');
 
                     continue;
                 }
@@ -296,25 +297,25 @@ namespace HaroldTheBot
                 string Column = $" {p.Username}";
                 builder.Append(DiscordEmoji.FromName(Program.DiscordClient, string.Concat(":", p.Role, ":")));
                 builder.Append(Column);
-                for (int i = 0; i < columnLimit - Utils.countSpaces(p.Username) - 8; i++)
-                    builder.Append(" ");
+                for (int i = 0; i < columnLimit - Utils.CountSpaces(p.Username) - 8; i++)
+                    builder.Append(' ');
 
                 if (counter++ % 3 == 0)
-                    builder.Append("\n");
+                    builder.Append('\n');
             }
 
-            builder.Append("\n");
+            builder.Append('\n');
 
             string RangedColumn = $" Ranged ({ranged.Count})";
             builder.Append(DiscordEmoji.FromName(Program.DiscordClient, ":RANGED:"));
             builder.Append(RangedColumn);
-            for (int i = 0; i < columnLimit - Utils.countSpaces(RangedColumn) - 7; i++)
-                builder.Append(" ");
+            for (int i = 0; i < columnLimit - Utils.CountSpaces(RangedColumn) - 7; i++)
+                builder.Append(' ');
 
             string MagicColumn = $" Magical ({magicals.Count})";
             builder.Append(DiscordEmoji.FromName(Program.DiscordClient, ":MAGICAL:"));
             builder.Append(MagicColumn);
-            builder.Append("\n");
+            builder.Append('\n');
 
             rowToDraw.Clear();
 
@@ -337,21 +338,21 @@ namespace HaroldTheBot
                 if (p == null)
                 {
                     for (int i = 0; i < columnLimit; i++)
-                        builder.Append(" ");
+                        builder.Append(' ');
 
                     if (counter++ % 2 == 0)
-                        builder.Append("\n");
+                        builder.Append('\n');
 
                     continue;
                 }
 
                 string Column = $"{DiscordEmoji.FromName(Program.DiscordClient, string.Concat(":", p.Role, ":"))} {p.Username}";
                 builder.Append(Column);
-                for (int i = 0; i < columnLimit - Utils.countSpaces(p.Username) - 8; i++)
-                    builder.Append(" ");
+                for (int i = 0; i < columnLimit - Utils.CountSpaces(p.Username) - 8; i++)
+                    builder.Append(' ');
 
                 if (counter++ % 2 == 0)
-                    builder.Append("\n");
+                    builder.Append('\n');
             }
 
             return builder.ToString();
@@ -359,11 +360,32 @@ namespace HaroldTheBot
 
         public string CreateMessage()
         {
-            return $"id: [{Id}]\n{RenderParticipants()}\nThe raid {Title} is starting at {EventStart.ToString("dd/MM/yyyy HH:mm:ss")} ";
+            string message;
+            string eventStart = EventStart.ToString("dd/MM/yyyy HH:mm:ss");
+
+            if (!Expired)
+            {
+                message = $"The raid {Title} is starting at {eventStart} ST";
+            }
+            else
+            {
+                message = $"The raid {Title} has started ~~{eventStart} ST~~";
+            }
+
+            return $"id: [{Id}]\n{RenderParticipants()}\n{message}";
         }
 
         public async Task<DiscordMessage> UpdateMessage()
         {
+            if(Message == null && MessageId.HasValue)
+            {
+                if(ChannelId.HasValue)
+                    Channel = await Program.DiscordClient.GetChannelAsync(ChannelId.Value);
+
+                if (MessageId.HasValue)
+                    Message = await Channel.GetMessageAsync(MessageId.Value);
+            }
+
             if (Message != null)
             {
                 return await Message.ModifyAsync(CreateMessage());
@@ -379,8 +401,8 @@ namespace HaroldTheBot
 
     public static class RaidStorage
     {
-        public static object eventLock = new object(); 
-        private static Dictionary<Guid, RaidEvent> RaidEvents = new Dictionary<Guid, RaidEvent>();
+        public static object eventLock = new(); 
+        private static Dictionary<Guid, RaidEvent> RaidEvents = new();
         
 
         public static RaidEvent AddRaid(string title, DateTime eventStart)
@@ -411,6 +433,11 @@ namespace HaroldTheBot
 
                 return RaidEvents[guid];
             }
+        }
+
+        public static IEnumerable<RaidEvent> GetRaids()
+        {
+            return RaidEvents.Values;
         }
 
         public static bool RemoveRaid(Guid guid)
@@ -559,9 +586,40 @@ namespace HaroldTheBot
         }
     }
 
+    public static class RaidMonitorer
+    {
+        public static void Run()
+        {
+            while (true)
+            {
+                lock (RaidStorage.eventLock)
+                {
+                    var raids = RaidStorage.GetRaids();
+
+                    if (raids != null)
+                    {
+                        var now = DateTime.UtcNow;
+
+                        foreach (var raid in raids)
+                        {
+                            if (raid.Expired)
+                                continue;
+
+                            raid.Expired = raid.EventStart < now;
+                            if(raid.Expired)
+                                _ = raid.UpdateMessage();
+                        }
+                    }
+                }
+
+                Thread.Sleep(1000);
+            }
+        }
+    }
+
     public static class MessageMonitorer
     {
-        public static Dictionary<string, StringComparison> StringBlacklist = new Dictionary<string, StringComparison>()
+        private static readonly Dictionary<string, StringComparison> StringBlacklist = new()
         {
             { "WoW", StringComparison.Ordinal },
             { "World of Warcraft", StringComparison.OrdinalIgnoreCase }
@@ -591,9 +649,8 @@ namespace HaroldTheBot
             {
                 ev = RaidStorage.GetRaid(guid);
                 ev.Message = message;
-                DiscordMember member;
 
-                e.User.Presence.Guild.Members.TryGetValue(e.User.Id, out member);
+                e.User.Presence.Guild.Members.TryGetValue(e.User.Id, out DiscordMember member);
 
                 string NickName = e.User.Username;
 
@@ -642,15 +699,13 @@ namespace HaroldTheBot
                 ev = RaidStorage.GetRaid(guid);
                 ev.Message = message;
 
-                DiscordMember member;
 
-                e.User.Presence.Guild.Members.TryGetValue(e.User.Id, out member);
+                e.User.Presence.Guild.Members.TryGetValue(e.User.Id, out DiscordMember member);
 
                 if (member != null)
                 {
-                    object job;
 
-                    if (!Enum.TryParse(typeof(Job), e.Emoji.Name.Trim(':'), out job))
+                    if (!Enum.TryParse(typeof(Job), e.Emoji.Name.Trim(':'), out object job))
                         return;
 
                     string NickName = e.User.Username;

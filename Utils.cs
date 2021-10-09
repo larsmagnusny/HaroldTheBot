@@ -8,7 +8,7 @@ namespace HaroldTheBot
 {
     public static class Utils
     {
-        private static Dictionary<char, double> charWidths = new Dictionary<char, double>()
+        private static readonly Dictionary<char, double> charWidths = new()
         {
             {' ', 4 },
             {'A', 11 },
@@ -84,7 +84,7 @@ namespace HaroldTheBot
             {')', 7 },
         };
 
-        public static int countSpaces(string str)
+        public static int CountSpaces(string str)
         {
             double numSpaces = 0;
             double spaceWidth = charWidths[' '];
@@ -111,39 +111,39 @@ namespace HaroldTheBot
             return -1;
         }
 
-        public static bool hasNextParameter(string[] array, int index)
+        public static bool HasNextParameter(string[] array, int index)
         {
-            return !(index + 1 >= array.Length || string.IsNullOrEmpty(array[index + 1]) || isParameter(array[index + 1]));
+            return !(index + 1 >= array.Length || string.IsNullOrEmpty(array[index + 1]) || IsParameter(array[index + 1]));
         }
 
-        public static bool isParameter(string str)
+        public static bool IsParameter(string str)
         {
             return str[0] == '-';
         }
 
         
 
-        public static bool isTank(Job job)
+        public static bool IsTank(Job job)
         {
             return job == Job.WAR || job == Job.PLD || job == Job.DRK || job == Job.GNB || job == Job.MRD || job == Job.GLA;
         }
 
-        public static bool isHealer(Job job)
+        public static bool IsHealer(Job job)
         {
             return job == Job.CNJ || job == Job.WHM || job == Job.SCH || job == Job.AST;
         }
 
-        public static bool isMeleeDPS(Job job)
+        public static bool IsMeleeDPS(Job job)
         {
             return job == Job.LNC || job == Job.PGL || job == Job.ROG || job == Job.DRG || job == Job.MNK || job == Job.NIN || job == Job.SAM;
         }
 
-        public static bool isRangedDPS(Job job)
+        public static bool IsRangedDPS(Job job)
         {
             return job == Job.ARC || job == Job.BRD || job == Job.MCH || job == Job.DNC;
         }
 
-        public static bool isMagicDPS(Job job)
+        public static bool IsMagicDPS(Job job)
         {
             return job == Job.ACN || job == Job.THM || job == Job.BLM || job == Job.SMN || job == Job.RDM || job == Job.BLU;
         }

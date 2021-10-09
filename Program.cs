@@ -13,7 +13,7 @@ using System.Reflection;
 internal class Program
 {
     /* This is the cancellation token we'll use to end the bot if needed(used for most async stuff). */
-    private CancellationTokenSource _cts { get; set; }
+    private CancellationTokenSource Cts { get; set; }
 
     /* We'll load the app config into this when we create it a little later. */
     private IConfigurationRoot _config;
@@ -30,14 +30,17 @@ internal class Program
         try
         {
             Console.WriteLine("[info] Harold is waking up!");
-            _cts = new CancellationTokenSource();
+            Cts = new CancellationTokenSource();
 
             Console.Write("[info] Loading save data...");
             RaidStorage.LoadStorage();
             Console.Write($"[info] Loaded data.");
 
-            Thread t = new Thread(StorageThread.Run);
+            Thread t = new(StorageThread.Run);
             t.Start();
+
+            Thread t1 = new(RaidMonitorer.Run);
+            t1.Start();
 
             // Load the config file(we'll create this shortly)
             Console.WriteLine("[info] Loading config file..");
@@ -84,13 +87,17 @@ internal class Program
 
     async Task RunAsync(string[] args)
     {
+        if (args is null)
+        {
+            throw new ArgumentNullException(nameof(args));
+        }
         // Connect to discord's service
         Console.WriteLine("Connecting..");
         await DiscordClient.ConnectAsync();
         Console.WriteLine("Connected!");
 
         // Keep the bot running until the cancellation token requests we stop
-        while (!_cts.IsCancellationRequested)
+        while (!Cts.IsCancellationRequested)
             await Task.Delay(TimeSpan.FromMinutes(1));
     }
 }

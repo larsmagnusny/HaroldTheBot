@@ -24,6 +24,7 @@ namespace HaroldTheBot
         {
             Name = name;
             Description = description;
+            MountType = type;
         }
 
         public string Name { get; set; }
@@ -33,7 +34,7 @@ namespace HaroldTheBot
 
     public class AllMounts
     {
-        public static Dictionary<MountType, string> MountTypeDescriptions = new Dictionary<MountType, string>()
+        public static Dictionary<MountType, string> MountTypeDescriptions = new()
         {
             { MountType.QUEST_AND_CRAFT_MOUNTS, "These mounts are obtained by completing quests and learning different crafting recipes."},
             { MountType.INGAME_PURCHASE, "Earn different in-game currencies by winning Triple Triad matches in the Gold Saucer, completing quests, and much more."},
@@ -43,7 +44,7 @@ namespace HaroldTheBot
             { MountType.PROMOTIONAL, "Recruit friends to Final Fantasy XIV and complete in-game events to be rewarded with limited time mounts."}
         };
 
-        public static Dictionary<string, string> EmoteMount = new Dictionary<string, string>()
+        public static Dictionary<string, string> EmoteMount = new()
         {
             {":garuda:", "Xanthos" },
             {":titan:", "Gullfaxi" },
@@ -75,7 +76,7 @@ namespace HaroldTheBot
             {":lightg:", "Gwiber Of Light" }
         };
 
-        public static Dictionary<string, string> MountEmote = new Dictionary<string, string>()
+        public static Dictionary<string, string> MountEmote = new()
         {
             { "Xanthos", ":garuda:"},
             { "Gullfaxi", ":titan:" },
@@ -107,7 +108,7 @@ namespace HaroldTheBot
             { "Gwiber Of Light", ":lightg:" }
         };
 
-        private static List<Mount> MountList = new List<Mount>
+        private static readonly List<Mount> MountList = new()
         {
             new Mount("Black Chocobo", "A single-seater mount, obtain by completing the Main Scenario Quest Divine Intervention", MountType.QUEST_AND_CRAFT_MOUNTS),
             new Mount("Ehll Tou", "A single-seater mount, obtain by completing the On Ehll Tou’s Wings side quest", MountType.QUEST_AND_CRAFT_MOUNTS),
@@ -313,7 +314,7 @@ namespace HaroldTheBot
 
         public static List<Mount> Search(string name)
         {
-            List<Mount> ret = new List<Mount>();
+            List<Mount> ret = new();
             for(int i = 0; i < MountList.Count; i++)
             {
                 if (MountList[i].Name.Contains(name, StringComparison.OrdinalIgnoreCase) || MountList[i].Description.Contains(name, StringComparison.OrdinalIgnoreCase))

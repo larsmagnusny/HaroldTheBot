@@ -8,9 +8,9 @@ using System.Threading.Tasks;
 
 namespace HaroldTheBot
 {
-	public class BasicCommandsModule : BaseCommandModule
+	public class RaidCommandsModule : BaseCommandModule
 	{
-		private string help =
+		private readonly string help =
 @"
 ""/raid"" takes these parameters
 new               - Create a new raid event
@@ -43,7 +43,7 @@ Example: raid remove " + Guid.NewGuid();
             {
 				int tIndex = Utils.IndexOf(args, "-t");
 				int dtIndex = Utils.IndexOf(args, "-dt");
-				int rIndex = Utils.IndexOf(args, "-r");
+				//int rIndex = Utils.IndexOf(args, "-r");
 
 				if (tIndex == -1)
 				{
@@ -55,25 +55,22 @@ Example: raid remove " + Guid.NewGuid();
 					await ctx.RespondAsync("I can't really create a raid if you haven't defined when it starts. Use the -dt parameter please.");
 					return;
                 }
-				if (!Utils.hasNextParameter(args, tIndex))
+				if (!Utils.HasNextParameter(args, tIndex))
 				{
 					await ctx.RespondAsync("I expected to get a title, but you gave me nothing... I will be reporting this to my supervisor.");
 					return;
 				}
-				if(!Utils.hasNextParameter(args, dtIndex))
+				if(!Utils.HasNextParameter(args, dtIndex))
                 {
 					await ctx.RespondAsync("I expected to get a date, but you gave me nothing... Should i bring flowers next time?");
 					return;
                 }
-				if(!Utils.hasNextParameter(args, dtIndex + 1))
+				if(!Utils.HasNextParameter(args, dtIndex + 1))
                 {
 					await ctx.RespondAsync("I expected to get time as well, I'm a bit busy, is 00:00 OK?");
                 }
-				string title = string.Empty;
-				string dateTime = string.Empty;
-				bool recurring = false;
 
-				int titleIndex = ctx.RawArgumentString.IndexOf("-t \"");
+                int titleIndex = ctx.RawArgumentString.IndexOf("-t \"");
 				int titleEndIndex = ctx.RawArgumentString.IndexOf("\"", titleIndex + 4);
 
 				if(titleEndIndex == -1)
@@ -82,15 +79,15 @@ Example: raid remove " + Guid.NewGuid();
 					return;
                 }
 
-				title = ctx.RawArgumentString.Substring(titleIndex + 3, titleEndIndex - titleIndex - 2);
-				dateTime = args[dtIndex + 1];
+                string title = ctx.RawArgumentString.Substring(titleIndex + 3, titleEndIndex - titleIndex - 2);
+                string dateTime = args[dtIndex + 1];
 
-				if (dtIndex + 2 <= args.Length - 1)
+                if (dtIndex + 2 <= args.Length - 1)
 					dateTime = string.Concat(dateTime, " ", args[dtIndex + 2]);
 
-				recurring = !(rIndex == -1);
-				DateTime starttime;
-				try
+                //bool recurring = !(rIndex == -1);
+                DateTime starttime;
+                try
 				{
 					starttime = DateTime.Parse(dateTime);
 				}
@@ -103,11 +100,14 @@ Example: raid remove " + Guid.NewGuid();
 				var ev = RaidStorage.AddRaid(title.Trim('"'), starttime);
 				var Msg = await ctx.RespondAsync(ev.CreateMessage());
 				ev.Message = Msg;
+				ev.MessageId = ev.MessageId;
+				ev.Channel = Msg.Channel;
+				ev.ChannelId = Msg.ChannelId;
 				return;
 			}
 			else if (removeIndex != -1)
             {
-				if (!Utils.hasNextParameter(args, removeIndex))
+				if (!Utils.HasNextParameter(args, removeIndex))
                 {
 					await ctx.RespondAsync("Remove what? Do you expect me to remove nothing? Ok then.");
 					return;
