@@ -521,7 +521,7 @@ namespace HaroldTheBot
                     if (raids != null)
                     {
                         var now = DateTime.UtcNow;
-                        var thirtyMinutesAgo = DateTime.UtcNow.AddMinutes(-10);
+                        var thirtyMinutesAgo = DateTime.UtcNow.AddMinutes(10);
 
                         foreach (var raid in raids)
                         {
