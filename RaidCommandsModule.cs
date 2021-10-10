@@ -89,7 +89,7 @@ Example: raid remove " + Guid.NewGuid();
                 DateTime starttime;
                 try
 				{
-					starttime = DateTime.Parse(dateTime);
+					starttime = DateTime.Parse(dateTime, Program.CurrentCulture);
 				}
                 catch
                 {

@@ -9,6 +9,7 @@ using DSharpPlus.Interactivity;
 using Microsoft.Extensions.Configuration;
 using HaroldTheBot;
 using System.Reflection;
+using System.Globalization;
 
 internal class Program
 {
@@ -17,6 +18,8 @@ internal class Program
 
     /* We'll load the app config into this when we create it a little later. */
     private IConfigurationRoot _config;
+
+    public static CultureInfo CurrentCulture = CultureInfo.GetCultureInfo("nb-NO");
 
     /* These are the discord library's main classes */
     public static DiscordClient DiscordClient;

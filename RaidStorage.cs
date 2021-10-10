@@ -278,7 +278,7 @@ namespace HaroldTheBot
             }
             else
             {
-                message = $"The raid {Title} has started ~~{eventStart} ST~~";
+                message = $"{DiscordEmoji.FromName(Program.DiscordClient, ":raidfinished:")} The raid {Title} has started ~~{eventStart} ST~~";
             }
 
             return $"id: [{Id}]\n{RenderParticipants()}\n{message}";
