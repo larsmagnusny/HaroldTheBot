@@ -38,9 +38,9 @@ Example: vote remove [id]";
                 int tIndex = Utils.IndexOf(args, "-t");
                 int oIndex = Utils.IndexOf(args, "-o");
 
-                if (!Utils.HasNextParameter(args, tIndex))
+                if (tIndex != -1 && !Utils.HasNextParameter(args, tIndex))
                     await ctx.RespondAsync("I expected to get a title, but you gave me nothing... I will be reporting this to my supervisor.");
-                if (!Utils.HasNextParameter(args, oIndex))
+                if (oIndex != -1 && !Utils.HasNextParameter(args, oIndex))
                     await ctx.RespondAsync("I expected to have some options, but you gave me nothing. How will i ever recover from this travestly.");
             }
             else if(args[0] == "remove")
