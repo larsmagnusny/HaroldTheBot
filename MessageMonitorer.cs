@@ -31,31 +31,10 @@ namespace HaroldTheBot
             lock (RaidStorage.eventLock)
             {
                 ev = RaidStorage.GetRaid(message.Id);
-
-                if (ev == null)
-                    return;
-
-                DiscordMember member = null;
-                string NickName = e.User.Username;
-
-                if (e.User.Presence == null)
-                    member = null;
-                else if (e.User.Presence.Guild != null)
-                    e.User.Presence.Guild.Members.TryGetValue(e.User.Id, out member);
-
-                if (member != null && !string.IsNullOrEmpty(member.Nickname))
-                    NickName = member.Nickname;
-
-                if (!ev.Participants.ContainsKey(e.User.Id))
-                    return;
-
-                RaidParticipant participant = ev.Participants[e.User.Id];
-
-                if (participant.Role.ToString() == e.Emoji.Name.Trim(':'))
-                    ev.Participants.Remove(e.User.Id);
             }
 
-            await e.Message.ModifyAsync(ev.CreateMessage());
+            if (ev != null)
+                ev.ReactionRemoved(s, e, message);
         }
 
         public static async void ReactionAdded(DiscordClient s, MessageReactionAddEventArgs e)
@@ -66,13 +45,15 @@ namespace HaroldTheBot
                 message = await e.Channel.GetMessageAsync(e.Message.Id);
             }
 
+            RaidEvent ev;
+
             lock (RaidStorage.eventLock)
             {
-                var ev = RaidStorage.GetRaid(message.Id);
-
-                if (ev != null)
-                    ev.ReactionAdded(s, e, message);
+                ev = RaidStorage.GetRaid(message.Id);
             }
+
+            if (ev != null)
+                ev.ReactionAdded(s, e, message);
         }
 
         public static async void MessageCreated(DiscordClient s, MessageCreateEventArgs e)
