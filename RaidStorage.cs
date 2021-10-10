@@ -60,16 +60,15 @@ namespace HaroldTheBot
 
             //LoadTestData();
         }
-        public Guid Id { get; set; }
-        public ulong? MessageId { get; set; }
+        public ulong Id { get; set; }
         private DiscordMessage message;
 
         public async Task<DiscordMessage> GetMessage()
         {
             var channel = await GetChannel();
-            if (message == null && MessageId.HasValue)
+            if (message == null)
             {
-                message = await channel.GetMessageAsync(MessageId.Value);
+                message = await channel.GetMessageAsync(Id);
             }
 
             return message;
@@ -307,35 +306,34 @@ namespace HaroldTheBot
     public static class RaidStorage
     {
         public static object eventLock = new(); 
-        private static Dictionary<Guid, RaidEvent> RaidEvents = new();
+        private static Dictionary<ulong, RaidEvent> RaidEvents = new();
         
 
-        public static RaidEvent AddRaid(string title, DateTime eventStart)
+        public static RaidEvent AddRaid(ulong messageId, string title, DateTime eventStart)
         {
-            var guid = Guid.NewGuid();
             var raidEvent = new RaidEvent
             {
-                Id = guid,
+                Id = messageId,
                 Title = title,
                 EventStart = eventStart
             };
 
             lock (eventLock)
             {
-                RaidEvents.Add(guid, raidEvent);
+                RaidEvents.Add(messageId, raidEvent);
             }
 
             return raidEvent;
         }
 
-        public static RaidEvent GetRaid(Guid guid)
+        public static RaidEvent GetRaid(ulong messageId)
         {
             lock (eventLock)
             {
-                if (!RaidEvents.ContainsKey(guid))
+                if (!RaidEvents.ContainsKey(messageId))
                     return null;
 
-                return RaidEvents[guid];
+                return RaidEvents[messageId];
             }
         }
 
@@ -344,16 +342,16 @@ namespace HaroldTheBot
             return RaidEvents.Values;
         }
 
-        public static bool RemoveRaid(Guid guid)
+        public static bool RemoveRaid(ulong messageId)
         {
             lock (eventLock)
             {
-                if (RaidEvents.ContainsKey(guid))
+                if (RaidEvents.ContainsKey(messageId))
                 {
-                    var ev = RaidEvents[guid];
+                    var ev = RaidEvents[messageId];
                     ev.DeleteMessage();
                 }
-                return RaidEvents.Remove(guid);
+                return RaidEvents.Remove(messageId);
             }
         }
 
@@ -368,11 +366,13 @@ namespace HaroldTheBot
                 fStream.Write(buffer);
                 foreach (var ev in RaidEvents)
                 {
-                    var guidStr = ev.Key.ToString();
-                    buffer = BitConverter.GetBytes(guidStr.Length);
+                    buffer = BitConverter.GetBytes(ev.Value.Id);
                     fStream.Write(buffer);
 
-                    buffer = Encoding.UTF8.GetBytes(guidStr);
+                    buffer = BitConverter.GetBytes(ev.Value.Notified);
+                    fStream.Write(buffer);
+
+                    buffer = BitConverter.GetBytes(ev.Value.Expired);
                     fStream.Write(buffer);
 
                     buffer = BitConverter.GetBytes(ev.Value.Title.Length);
@@ -381,8 +381,7 @@ namespace HaroldTheBot
                     buffer = Encoding.UTF8.GetBytes(ev.Value.Title);
                     fStream.Write(buffer);
 
-                    buffer = BitConverter.GetBytes(ev.Value.MessageId ?? 0);
-                    fStream.Write(buffer);
+                    
 
                     buffer = BitConverter.GetBytes(ev.Value.ChannelId ?? 0);
                     fStream.Write(buffer);
@@ -420,6 +419,7 @@ namespace HaroldTheBot
             byte[] intBuffer = new byte[4];
             byte[] longBuffer = new byte[8];
             byte[] strBuffer;
+            byte[] boolBuffer = new byte[1];
             int len;
             ulong ulo;
             long lo;
@@ -432,13 +432,14 @@ namespace HaroldTheBot
                 {
                     var ev = new RaidEvent();
 
-                    fStream.Read(intBuffer, 0, 4);
-                    len = BitConverter.ToInt32(intBuffer);
+                    fStream.Read(longBuffer, 0, 8);
+                    ev.Id = BitConverter.ToUInt64(longBuffer);
 
-                    strBuffer = new byte[len];
-                    fStream.Read(strBuffer, 0, len);
+                    fStream.Read(boolBuffer, 0, 1);
+                    ev.Notified = BitConverter.ToBoolean(boolBuffer);
 
-                    ev.Id = Guid.Parse(Encoding.UTF8.GetString(strBuffer));
+                    fStream.Read(boolBuffer, 0, 1);
+                    ev.Expired = BitConverter.ToBoolean(boolBuffer);
 
                     fStream.Read(intBuffer, 0, 4);
                     len = BitConverter.ToInt32(intBuffer);
@@ -446,10 +447,6 @@ namespace HaroldTheBot
                     strBuffer = new byte[len];
                     fStream.Read(strBuffer, 0, len);
                     ev.Title = Encoding.UTF8.GetString(strBuffer);
-
-                    fStream.Read(longBuffer, 0, 8);
-                    ulo = BitConverter.ToUInt64(longBuffer);
-                    ev.MessageId = ulo != 0 ? ulo : null;
 
                     fStream.Read(longBuffer, 0, 8);
                     ulo = BitConverter.ToUInt64(longBuffer);
@@ -589,21 +586,14 @@ namespace HaroldTheBot
                 message = await e.Channel.GetMessageAsync(e.Message.Id);
             }
 
-            int guidIndex = message.Content.IndexOf("id: [");
-            int guidEnd = message.Content.IndexOf("]", guidIndex + 5);
-
-            if (guidIndex == -1 || guidEnd == -1)
-                return;
-
-            string guidStr = message.Content.Substring(guidIndex + 5, guidEnd - guidIndex - 5);
-
-            var guid = Guid.Parse(guidStr);
-
             RaidEvent ev;
 
             lock (RaidStorage.eventLock)
             {
-                ev = RaidStorage.GetRaid(guid);
+                ev = RaidStorage.GetRaid(message.Id);
+
+                if (ev == null)
+                    return;
 
                 DiscordMember member = null;
                 string NickName = e.User.Username;
@@ -636,23 +626,16 @@ namespace HaroldTheBot
                 message = await e.Channel.GetMessageAsync(e.Message.Id);
             }
 
-            int guidIndex = message.Content.IndexOf("id: [");
-            int guidEnd = message.Content.IndexOf("]", guidIndex + 5);
-
-            if (guidIndex == -1 || guidEnd == -1)
-                return;
-
-            string guidStr = message.Content.Substring(guidIndex + 5, guidEnd - guidIndex - 5);
-
-            var guid = Guid.Parse(guidStr);
-
             RaidEvent ev;
 
             DiscordEmoji emojiToRemove = null;
             
             lock (RaidStorage.eventLock)
             {
-                ev = RaidStorage.GetRaid(guid);
+                ev = RaidStorage.GetRaid(message.Id);
+
+                if (ev == null)
+                    return;
 
                 DiscordMember member = null;
                 string NickName = e.User.Username;

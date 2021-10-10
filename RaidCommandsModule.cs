@@ -97,12 +97,16 @@ Example: raid remove " + Guid.NewGuid();
 					return;
                 }
 				/* Send the message "I'm Alive!" to the channel the message was recieved from */
-				var ev = RaidStorage.AddRaid(title.Trim('"'), starttime);
-				var Msg = await ctx.RespondAsync(ev.CreateMessage());
+				
+				var Msg = await ctx.RespondAsync("Creating raid...");
+
+				var ev = RaidStorage.AddRaid(Msg.Id, title.Trim('"'), starttime);
+				
 				ev.SetMessage(Msg);
-				ev.MessageId = ev.MessageId;
 				ev.SetChannel(Msg.Channel);
 				ev.ChannelId = Msg.ChannelId;
+
+				await Msg.ModifyAsync(ev.CreateMessage());
 				return;
 			}
 			else if (removeIndex != -1)
@@ -115,9 +119,9 @@ Example: raid remove " + Guid.NewGuid();
 
 				try
 				{
-					Guid guid = Guid.Parse(args[removeIndex + 1]);
-					var raid = RaidStorage.GetRaid(guid);
-					var removed = RaidStorage.RemoveRaid(Guid.Parse(args[removeIndex + 1]));
+					ulong id = ulong.Parse(args[removeIndex + 1]);
+					var raid = RaidStorage.GetRaid(id);
+					var removed = RaidStorage.RemoveRaid(id);
 
                     if (!removed || raid == null)
                     {

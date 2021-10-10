@@ -11,6 +11,12 @@ namespace HaroldTheBot
         // Key is the message id
         private static Dictionary<Guid, Vote> Votes = new();
 
+        public static bool AddVote(Vote v)
+        {
+
+            return false;
+        }
+
         public static void SaveVotes()
         {
 
