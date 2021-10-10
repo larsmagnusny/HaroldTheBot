@@ -10,6 +10,7 @@ using Microsoft.Extensions.Configuration;
 using HaroldTheBot;
 using System.Reflection;
 using System.Globalization;
+using HaroldTheBot.Raids;
 
 internal class Program
 {

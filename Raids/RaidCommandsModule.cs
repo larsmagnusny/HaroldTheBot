@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace HaroldTheBot
+namespace HaroldTheBot.Raids
 {
 	public class RaidCommandsModule : BaseCommandModule
 	{
@@ -22,7 +22,7 @@ remove [id] - Remove a raid event
 -heal                - Number of healer slots
 -r                    - Recurring
 Example: raid new -t ""RaidName"" -dt " + DateTime.UtcNow.ToString("dd/MM/yyyy HH:mm:ss")+@" -r
-Example: raid remove " + Guid.NewGuid();
+Example: raid remove [id]";
 
 		[Command("raid")]
 		[Description("@participants to get ready to raid")]
