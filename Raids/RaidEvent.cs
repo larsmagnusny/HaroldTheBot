@@ -234,7 +234,7 @@ namespace HaroldTheBot.Raids
 
             if (!Expired)
             {
-                message = $"The raid {Title} is starting at {eventStart} ST";
+                message = $"The raid {Title} is starting at {eventStart} ST for {RaidMonitorer.GetSurgeonRole().Mention}";
             }
             else
             {
