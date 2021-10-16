@@ -2,6 +2,7 @@
 Description=Harold the bot the amazing automaton of Vikings in Labour
 
 [Service]
+WorkingDirectory=/home/lars/git/HaroldTheBot/bin/Debug/net5.0/HaroldTheBot
 # systemd will run this executable to start the service
 ExecStart=/home/lars/git/HaroldTheBot/bin/Debug/net5.0/HaroldTheBot
 # to query logs using journalctl, set a logical name here
