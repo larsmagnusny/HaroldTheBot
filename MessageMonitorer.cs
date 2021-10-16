@@ -27,14 +27,21 @@ namespace HaroldTheBot
             }
 
             RaidEvent ev;
+            VoteEvent vev;
 
             lock (RaidStorage.eventLock)
             {
                 ev = RaidStorage.GetRaid(message.Id);
             }
+            lock (VoteStorage.voteLock)
+            {
+                vev = VoteStorage.GetVote(message.Id);
+            }
 
             if (ev != null)
                 ev.ReactionRemoved(s, e, message);
+            if (vev != null)
+                vev.ReactionRemoved(s, e, message);
         }
 
         public static async void ReactionAdded(DiscordClient s, MessageReactionAddEventArgs e)
@@ -46,14 +53,21 @@ namespace HaroldTheBot
             }
 
             RaidEvent ev;
+            VoteEvent vev;
 
             lock (RaidStorage.eventLock)
             {
                 ev = RaidStorage.GetRaid(message.Id);
             }
+            lock (VoteStorage.voteLock)
+            {
+                vev = VoteStorage.GetVote(message.Id);
+            }
 
             if (ev != null)
                 ev.ReactionAdded(s, e, message);
+            if (vev != null)
+                vev.ReactionAdded(s, e, message);
         }
 
         public static async void MessageCreated(DiscordClient s, MessageCreateEventArgs e)

@@ -38,10 +38,44 @@ Example: vote remove [id]";
                 int tIndex = Utils.IndexOf(args, "-t");
                 int oIndex = Utils.IndexOf(args, "-o");
 
-                if (tIndex != -1 && !Utils.HasNextParameter(args, tIndex))
+                if (tIndex == -1 || !Utils.HasNextParameter(args, tIndex))
+                {
                     await ctx.RespondAsync("I expected to get a title, but you gave me nothing... I will be reporting this to my supervisor.");
-                if (oIndex != -1 && !Utils.HasNextParameter(args, oIndex))
+                    return;
+                }
+                if (oIndex == -1 || !Utils.HasNextParameter(args, oIndex))
+                {
                     await ctx.RespondAsync("I expected to have some options, but you gave me nothing. How will i ever recover from this travestly.");
+                }
+
+                var msg = await ctx.RespondAsync("Creating vote...");
+
+                var newVote = new VoteEvent { Id = msg.Id, ChannelId = msg.ChannelId, Title = args[tIndex + 1].Trim('\"'),  };
+                
+                List<VoteOption> options = new();
+
+                StringBuilder builder = new();
+                for(int i = oIndex + 1; i < args.Length; i++)
+                {
+                    builder.Append(args[i]);
+
+                    if (i < args.Length - 1)
+                        builder.Append(' ');
+                }
+
+                string[] optStrs = builder.ToString().Split(", ");
+
+
+                for(int i = 0; i < optStrs.Length; i++)
+                {
+                    options.Add(new VoteOption { Title = optStrs[i].Trim('\"') });
+                }
+
+                newVote.Options = options.ToArray();
+
+                VoteStorage.AddVote(newVote);
+
+                await msg.ModifyAsync(newVote.CreateMessage());
             }
             else if(args[0] == "remove")
             {
