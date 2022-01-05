@@ -131,12 +131,12 @@ namespace HaroldTheBot
 
         public static bool IsHealer(Job job)
         {
-            return job == Job.CNJ || job == Job.WHM || job == Job.SCH || job == Job.AST;
+            return job == Job.CNJ || job == Job.WHM || job == Job.SCH || job == Job.AST || job == Job.SGE;
         }
 
         public static bool IsMeleeDPS(Job job)
         {
-            return job == Job.LNC || job == Job.PGL || job == Job.ROG || job == Job.DRG || job == Job.MNK || job == Job.NIN || job == Job.SAM;
+            return job == Job.LNC || job == Job.PGL || job == Job.ROG || job == Job.DRG || job == Job.MNK || job == Job.NIN || job == Job.SAM || job == Job.RPR;
         }
 
         public static bool IsRangedDPS(Job job)

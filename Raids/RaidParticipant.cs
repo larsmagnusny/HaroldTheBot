@@ -35,6 +35,8 @@ namespace HaroldTheBot.Raids
         BLU, // Blue Mage
         GNB, // Gunbreaker
         DNC, // Dancer
+        RPR, // Reaper
+        SGE, // Sage
     }
 
     public class RaidParticipant
