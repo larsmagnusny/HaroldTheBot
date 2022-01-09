@@ -54,6 +54,6 @@ spec:
           secretKeyRef:
             name: discord_secrets
             key: DISCORD_TOKEN
-      volumeMounts:
-        - mountPath: "/var/lib/haroldthebot/data"
-          name: haroldthebot-pv
+    volumeMounts:
+      - mountPath: "/var/lib/haroldthebot/data"
+        name: haroldthebot-pv
