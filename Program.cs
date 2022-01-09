@@ -58,10 +58,14 @@ internal class Program
 
             // Load the config file(we'll create this shortly)
             Console.WriteLine("[info] Loading config file..");
-            _config = new ConfigurationBuilder()
-                .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("config.json", optional: false, reloadOnChange: true)
-                .Build();
+
+            if (File.Exists("config.json"))
+            {
+                _config = new ConfigurationBuilder()
+                    .SetBasePath(Directory.GetCurrentDirectory())
+                    .AddJsonFile("config.json", optional: false, reloadOnChange: true)
+                    .Build();
+            }
 
             var token = Environment.GetEnvironmentVariable("DISCORD_TOKEN");
 
