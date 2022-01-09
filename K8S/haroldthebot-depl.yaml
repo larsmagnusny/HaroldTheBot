@@ -1,0 +1,58 @@
+﻿apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: haroldthebot-pv
+  labels:
+    type: local
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  capacity:
+    storage: 1Gi
+  hostPath:
+    path: /var/lib/haroldthebot/data
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: haroldthebot-pvc
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: appls/v1
+kind: Deployment
+metadata:
+  name: haroldthebot
+  labels:
+    app: haroldthebot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: haroldthebot
+  template:
+    metadata:
+      labels:
+        app: haroldthebot
+    spec:
+      containers:
+      - name: haroldthebot
+        image: larsmagnusny/haroldthebot:latest
+      volumes:
+      - name: haroldthebot-pv-storage
+        persistentVolumeClaim:
+          claimName: haroldthebot-pvc
+      env:
+        - name: DISCORD_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: discord_secrets
+              key: DISCORD_TOKEN
+      volumeMounts:
+        - mountPath: "/var/lib/haroldthebot/data"

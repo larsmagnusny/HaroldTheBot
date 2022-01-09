@@ -1,4 +1,5 @@
 ﻿using HaroldTheBot.Data.Entities;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -35,12 +36,23 @@ namespace HaroldTheBot.Data
 
         public RaidParticipant GetParticipant(ulong raidId, string username)
         {
-            return _db.RaidParticipants.FirstOrDefault(o => o.RaidEventId == raidId && o.Username == username);
+            return _db.RaidParticipants
+                .Include(o => o.Job)
+                .FirstOrDefault(o => o.RaidEventId == raidId && o.Username == username);
+        }
+
+        public RaidParticipant GetParticipant(ulong raidId, ulong userId)
+        {
+            return _db.RaidParticipants
+                .Include(o => o.Job)
+                .FirstOrDefault(o => o.RaidEventId == raidId && o.UserId == userId);
         }
 
         public IEnumerable<RaidParticipant> GetParticipants(ulong raidId)
         {
-            return _db.RaidParticipants.Where(o => o.RaidEventId == raidId);
+            return _db.RaidParticipants
+                .Include(o => o.Job)
+                .Where(o => o.RaidEventId == raidId);
         }
 
         public RaidEvent GetRaidEvent(ulong raidId)
@@ -48,9 +60,27 @@ namespace HaroldTheBot.Data
             return _db.RaidEvents.FirstOrDefault(o => o.Id == raidId);
         }
 
+        public bool HasParticipant(ulong raidId, ulong userId)
+        {
+            return _db.RaidParticipants.Where(o => o.RaidEventId == raidId).Any(o => o.UserId == userId);
+        }
+
         public bool RemoveParticipant(ulong raidId, string username)
         {
             var participant = GetParticipant(raidId, username);
+
+            if (participant == null)
+                return false;
+
+            _db.RaidParticipants.Remove(participant);
+            _db.SaveChanges();
+
+            return true;
+        }
+
+        public bool RemoveParticipant(ulong raidId, ulong userId)
+        {
+            var participant = GetParticipant(raidId, userId);
 
             if (participant == null)
                 return false;
@@ -72,6 +102,13 @@ namespace HaroldTheBot.Data
             _db.SaveChanges();
 
             return true;
+        }
+
+        public void SetRaidNotified(ulong raidId)
+        {
+            var raid = GetRaidEvent(raidId);
+            raid.Notified = true;
+            _db.SaveChanges();
         }
     }
 }

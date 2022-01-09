@@ -41,6 +41,7 @@ namespace HaroldTheBot.Raids
 
     public class RaidParticipant
     {
+        public ulong UserId { get; set; }
         public string Username { get; set; }
         public Job Role { get; set; }
     }

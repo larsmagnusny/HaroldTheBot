@@ -13,6 +13,7 @@ using System.Globalization;
 using HaroldTheBot.Raids;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
+using HaroldTheBot.Data;
 
 internal class Program
 {
@@ -43,14 +44,17 @@ internal class Program
     {
         try
         {
+            var dataSeed = serviceProvider.GetService<IDataSeed>();
+
+            dataSeed.SeedData();
+
             var raidMonitorer = serviceProvider.GetService<IRaidMonitorer>();
             var messageMonitorer = serviceProvider.GetService<IMessageMonitorer>();
 
             Console.WriteLine("[info] Harold is waking up!");
             Cts = new CancellationTokenSource();
 
-            Thread t1 = new(raidMonitorer.Run);
-            t1.Start();
+            
 
             // Load the config file(we'll create this shortly)
             Console.WriteLine("[info] Loading config file..");
@@ -74,9 +78,9 @@ internal class Program
                 AlwaysCacheMembers = true,
             });
 
-            DiscordClient.MessageReactionAdded += async (s, e) => messageMonitorer.ReactionAdded(s, e);
-            DiscordClient.MessageReactionRemoved += async (s, e) => messageMonitorer.ReactionRemoved(s, e);
-            DiscordClient.MessageCreated += async (s, e) => messageMonitorer.MessageCreated(s, e);
+            DiscordClient.MessageReactionAdded += async (s, e) => await messageMonitorer.ReactionAdded(s, e);
+            DiscordClient.MessageReactionRemoved += async (s, e) => await messageMonitorer.ReactionRemoved(s, e);
+            DiscordClient.MessageCreated += async (s, e) => await messageMonitorer.MessageCreated(s, e);
 
             // Build dependancies and then create the commands module.
             _commands = DiscordClient.UseCommandsNext(new CommandsNextConfiguration
@@ -88,6 +92,12 @@ internal class Program
             Console.WriteLine("[info] Loading command modules..");
 
             _commands.RegisterCommands(Assembly.GetExecutingAssembly());
+
+            DiscordClient.GuildDownloadCompleted += async (c, e) =>
+            {
+                Thread t1 = new(raidMonitorer.Run);
+                t1.Start();
+            };
 
             RunAsync(args).Wait();
         }

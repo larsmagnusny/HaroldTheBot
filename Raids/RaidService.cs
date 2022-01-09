@@ -20,30 +20,56 @@ namespace HaroldTheBot.Raids
         {
             _raidRepository = raidRepository;
         }
-        
-        public RaidEvent AddRaid(ulong messageId, string title, DateTime eventStart)
-        {
-            var raidEvent = new RaidEvent
-            {
-                Id = messageId,
-                Title = title,
-                EventStart = eventStart
-            };
 
+        public void AddParticipant(ulong messageId, RaidParticipant participant)
+        {
+            _raidRepository.AddParticipant(new Data.Entities.RaidParticipant
+            {
+                RaidEventId = messageId,
+                JobId = (int)participant.Role,
+                UserId = participant.UserId,
+                Username = participant.Username
+            });
+        }
+
+        public void AddRaid(RaidEvent ev)
+        {
             _raidRepository.AddRaidEvent(new Data.Entities.RaidEvent()
             {
-                Id = raidEvent.Id,
-                ChannelId = raidEvent.ChannelId.Value,
-                Title = raidEvent.Title,
-                EventStart = eventStart,
-                Notified = raidEvent.Notified,
-                Expired = raidEvent.Expired,
-                TankLimit = raidEvent.TankLimit,
-                DPSLimit = raidEvent.DPSLimit,
-                HealerLimit = raidEvent.HealerLimit
+                Id = ev.Id,
+                ChannelId = ev.ChannelId.Value,
+                Title = ev.Title,
+                EventStart = ev.EventStart,
+                Notified = ev.Notified,
+                Expired = ev.Expired,
+                TankLimit = ev.TankLimit,
+                DPSLimit = ev.DPSLimit,
+                HealerLimit = ev.HealerLimit
             });
+        }
 
-            return raidEvent;
+        public RaidParticipant GetParticipant(ulong messageId, ulong userId)
+        {
+            var participant = _raidRepository.GetParticipant(messageId, userId);
+
+            if (participant == null)
+                return null;
+
+            return new RaidParticipant
+            {
+                UserId = participant.UserId,
+                Role = (Job)participant.JobId,
+                Username = participant.Username
+            };
+        }
+
+        public IEnumerable<RaidParticipant> GetParticipants(ulong messageId)
+        {
+            return _raidRepository.GetParticipants(messageId).Select(o => new RaidParticipant
+            {
+                Role = o.Job != null ? (Job)o.Job.Id : Job.ACN,
+                Username = o.Username
+            }).ToList();
         }
 
         public RaidEvent GetRaid(ulong messageId)
@@ -60,7 +86,6 @@ namespace HaroldTheBot.Raids
                 Title = ev.Title,
                 EventStart = ev.EventStart,
                 Notified = ev.Notified,
-                Expired = ev.Expired,
                 TankLimit = ev.TankLimit,
                 DPSLimit = ev.DPSLimit,
                 HealerLimit = ev.HealerLimit
@@ -77,7 +102,6 @@ namespace HaroldTheBot.Raids
                     Title = x.Title,
                     EventStart = x.EventStart,
                     Notified = x.Notified,
-                    Expired = x.Expired,
                     TankLimit = x.TankLimit,
                     DPSLimit = x.DPSLimit,
                     HealerLimit = x.HealerLimit
@@ -85,9 +109,24 @@ namespace HaroldTheBot.Raids
             );
         }
 
+        public bool HasParticipant(ulong messageId, ulong userId)
+        {
+            return _raidRepository.HasParticipant(messageId, userId);
+        }
+
+        public bool RemoveParticipant(ulong messageId, ulong userId)
+        {
+            return _raidRepository.RemoveParticipant(messageId, userId);
+        }
+
         public bool RemoveRaid(ulong messageId)
         {
             return _raidRepository.RemoveRaidEvent(messageId);
+        }
+
+        public void SetRaidNotified(ulong messageId)
+        {
+            _raidRepository.SetRaidNotified(messageId);
         }
     }
 }

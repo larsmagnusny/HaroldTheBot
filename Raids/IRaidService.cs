@@ -8,9 +8,16 @@ namespace HaroldTheBot.Raids
 {
     public interface IRaidService
     {
-        RaidEvent AddRaid(ulong messageId, string title, DateTime eventStart);
+        void AddRaid(RaidEvent ev);
         RaidEvent GetRaid(ulong messageId);
         IEnumerable<RaidEvent> GetRaids();
         bool RemoveRaid(ulong messageId);
+        void SetRaidNotified(ulong messageId);
+
+        IEnumerable<RaidParticipant> GetParticipants(ulong messageId);
+        RaidParticipant GetParticipant(ulong messageId, ulong userId);
+        bool HasParticipant(ulong messageId, ulong userId);
+        bool RemoveParticipant(ulong messageId, ulong userId);
+        void AddParticipant(ulong messageId, RaidParticipant participant);
     }
 }

@@ -16,7 +16,6 @@ namespace HaroldTheBot.Raids
             TankLimit = 2;
             DPSLimit = 4;
             HealerLimit = 2;
-            Participants = new Dictionary<ulong, RaidParticipant>();
 
             //LoadTestData();
         }
@@ -59,15 +58,18 @@ namespace HaroldTheBot.Raids
         }
 
         public string Title { get; set; }
-        public Dictionary<ulong, RaidParticipant> Participants { get; set; }
         public DateTime EventStart { get; set; }
         public bool Notified { get; set; }
-        public bool Expired { get; set; }
+        public bool Expired {
+            get {
+                return DateTime.UtcNow > EventStart;
+            }
+        }
         public int TankLimit { get; set; }
         public int DPSLimit { get; set; }
         public int HealerLimit { get; set; }
 
-        public string RenderParticipants()
+        public string RenderParticipants(IRaidService raidService)
         {
             StringBuilder builder = new();
 
@@ -77,18 +79,20 @@ namespace HaroldTheBot.Raids
             Queue<RaidParticipant> ranged = new();
             Queue<RaidParticipant> magicals = new();
 
-            foreach (var item in Participants.OrderBy(o => o.Value.Role))
+            var participants = raidService.GetParticipants(Id).ToList();
+
+            foreach (var item in participants.OrderBy(o => o.Role))
             {
-                if (Utils.IsTank(item.Value.Role))
-                    tanks.Enqueue(item.Value);
-                if (Utils.IsMeleeDPS(item.Value.Role))
-                    melees.Enqueue(item.Value);
-                if (Utils.IsHealer(item.Value.Role))
-                    healers.Enqueue(item.Value);
-                if (Utils.IsRangedDPS(item.Value.Role))
-                    ranged.Enqueue(item.Value);
-                if (Utils.IsMagicDPS(item.Value.Role))
-                    magicals.Enqueue(item.Value);
+                if (Utils.IsTank(item.Role))
+                    tanks.Enqueue(item);
+                if (Utils.IsMeleeDPS(item.Role))
+                    melees.Enqueue(item);
+                if (Utils.IsHealer(item.Role))
+                    healers.Enqueue(item);
+                if (Utils.IsRangedDPS(item.Role))
+                    ranged.Enqueue(item);
+                if (Utils.IsMagicDPS(item.Role))
+                    magicals.Enqueue(item);
             }
 
             int columnLimit = 60;
@@ -227,7 +231,7 @@ namespace HaroldTheBot.Raids
             return builder.ToString();
         }
 
-        public string CreateMessage()
+        public async Task<string> CreateMessage(IRaidService raidService)
         {
             string message;
             string eventStart = EventStart.ToString("dd/MM/yyyy HH:mm:ss");
@@ -242,15 +246,16 @@ namespace HaroldTheBot.Raids
                 message = $"{DiscordEmoji.FromName(Program.DiscordClient, ":raidfinished:")} The raid {Title} has started ~~{eventStart} ST~~";
             }
 
-            return $"id: [{Id}]\n{RenderParticipants()}\n{message}";
+            return $"id: [{Id}]\n{RenderParticipants(raidService)}\n{message}";
         }
 
-        public async Task<DiscordMessage> UpdateMessage()
+        public async Task<DiscordMessage> UpdateMessage(IRaidService raidService)
         {
             var message = await GetMessage();
             if (message != null)
             {
-                return await message.ModifyAsync(CreateMessage());
+                var newMessage = await CreateMessage(raidService);
+                return await message.ModifyAsync(newMessage);
             }
             return null;
         }
@@ -264,7 +269,7 @@ namespace HaroldTheBot.Raids
         }
 
 
-        public async void ReactionAdded(DiscordClient s, MessageReactionAddEventArgs e, DiscordMessage message)
+        public async void ReactionAdded(DiscordClient s, MessageReactionAddEventArgs e, DiscordMessage message, IRaidService raidService)
         {
             DiscordEmoji emojiToRemove = null;
 
@@ -282,28 +287,37 @@ namespace HaroldTheBot.Raids
             if (member != null && !string.IsNullOrEmpty(member.Nickname))
                 NickName = member.Nickname;
 
-            if (Participants.ContainsKey(e.User.Id))
+            var participant = raidService.GetParticipant(Id, e.User.Id);
+
+            if (participant != null)
             {
-                var prevParticipation = Participants[e.User.Id];
+                emojiToRemove = DiscordEmoji.FromName(s, string.Concat(":", participant.Role.ToString(), ":"));
 
-                emojiToRemove = DiscordEmoji.FromName(s, string.Concat(":", prevParticipation.Role.ToString(), ":"));
+                raidService.RemoveParticipant(Id, participant.UserId);
 
-                Participants.Remove(e.User.Id);
+                participant.Role = (Job)job;
+                participant.Username = NickName;
             }
 
-            Participants.Add(e.User.Id, new RaidParticipant
-            {
-                Role = (Job)job,
-                Username = NickName
-            });
+            if (participant == null)
+                participant = new RaidParticipant
+                {
+                    UserId = e.User.Id,
+                    Role = (Job)job,
+                    Username = NickName
+                };
+
+            raidService.AddParticipant(Id, participant);
 
             if (emojiToRemove != null && message != null)
                 await message.DeleteReactionAsync(emojiToRemove, e.User);
 
-            await message.ModifyAsync(CreateMessage());
+            var newMessage = await CreateMessage(raidService);
+
+            await message.ModifyAsync(newMessage);
         }
 
-        public async void ReactionRemoved(DiscordClient s, MessageReactionRemoveEventArgs e, DiscordMessage message)
+        public async void ReactionRemoved(DiscordClient s, MessageReactionRemoveEventArgs e, DiscordMessage message, IRaidService raidService)
         {
             DiscordMember member = null;
             string NickName = e.User.Username;
@@ -316,15 +330,19 @@ namespace HaroldTheBot.Raids
             if (member != null && !string.IsNullOrEmpty(member.Nickname))
                 NickName = member.Nickname;
 
-            if (!Participants.ContainsKey(e.User.Id))
+            var participant = raidService.GetParticipant(Id, e.User.Id);
+
+            if (participant == null)
                 return;
 
-            RaidParticipant participant = Participants[e.User.Id];
-
             if (participant.Role.ToString() == e.Emoji.Name.Trim(':'))
-                Participants.Remove(e.User.Id);
+            {
+                raidService.RemoveParticipant(Id, participant.UserId);
+            }
 
-            await message.ModifyAsync(CreateMessage());
+            var newMessage = await CreateMessage(raidService);
+
+            await message.ModifyAsync(newMessage);
         }
     }
 }

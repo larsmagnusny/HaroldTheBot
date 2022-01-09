@@ -14,7 +14,8 @@ namespace HaroldTheBot
     {
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddDbContext<HaroldDbContext>();
+            services.AddScoped<HaroldDbContext>();
+            services.AddScoped<IDataSeed, DataSeed>();
             services.AddScoped<IRaidRepository, RaidRepository>();
             services.AddScoped<IRaidService, RaidService>();
             services.AddScoped<IRaidMonitorer, RaidMonitorer>();

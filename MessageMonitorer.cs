@@ -2,6 +2,7 @@
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using HaroldTheBot.Raids;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,10 +13,10 @@ namespace HaroldTheBot
 {
     public class MessageMonitorer : IMessageMonitorer
     {
-        private readonly IRaidService _raidService;
-        public MessageMonitorer(IRaidService raidService)
+        private readonly IServiceScopeFactory _serviceScopeFactory;
+        public MessageMonitorer(IServiceScopeFactory serviceScopeFactory)
         {
-            _raidService = raidService;
+            _serviceScopeFactory = serviceScopeFactory;
         }
 
         private readonly Dictionary<string, StringComparison> StringBlacklist = new()
@@ -24,7 +25,7 @@ namespace HaroldTheBot
             { "World of Warcraft", StringComparison.OrdinalIgnoreCase }
         };
 
-        public async void ReactionRemoved(DiscordClient s, MessageReactionRemoveEventArgs e)
+        public async Task ReactionRemoved(DiscordClient s, MessageReactionRemoveEventArgs e)
         {
             var message = e.Message;
             if (message.Content == null)
@@ -32,27 +33,35 @@ namespace HaroldTheBot
                 message = await e.Channel.GetMessageAsync(e.Message.Id);
             }
 
-            var ev = _raidService.GetRaid(message.Id); ;
+            using var scope = _serviceScopeFactory.CreateScope();
+
+            var raidService = (IRaidService)scope.ServiceProvider.GetService(typeof(IRaidService));
+
+            var ev = raidService.GetRaid(message.Id);
 
             if (ev != null)
-                ev.ReactionRemoved(s, e, message);
+                ev.ReactionRemoved(s, e, message, raidService);
+
         }
 
-        public async void ReactionAdded(DiscordClient s, MessageReactionAddEventArgs e)
+        public async Task ReactionAdded(DiscordClient s, MessageReactionAddEventArgs e)
         {
             var message = e.Message;
             if (message.Content == null)
             {
                 message = await e.Channel.GetMessageAsync(e.Message.Id);
             }
+            using var scope = _serviceScopeFactory.CreateScope();
 
-            var ev = _raidService.GetRaid(message.Id);
+            var raidService = (IRaidService)scope.ServiceProvider.GetService(typeof(IRaidService));
+
+            var ev = raidService.GetRaid(message.Id);
 
             if (ev != null)
-                ev.ReactionAdded(s, e, message);
+                ev.ReactionAdded(s, e, message, raidService);
         }
 
-        public async void MessageCreated(DiscordClient s, MessageCreateEventArgs e)
+        public async Task MessageCreated(DiscordClient s, MessageCreateEventArgs e)
         {
             if (e.Message.Author.Username == "HaroldTheBot")
                 return;

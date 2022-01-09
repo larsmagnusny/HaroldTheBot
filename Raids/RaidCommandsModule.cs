@@ -108,13 +108,22 @@ Example: raid remove [id]";
 				
 				var Msg = await ctx.RespondAsync("Creating raid...");
 
-				var ev = _raidService.AddRaid(Msg.Id, title.Trim('"'), starttime);
-				
+				var ev = new RaidEvent()
+				{
+					Id = Msg.Id,
+					ChannelId = Msg.ChannelId,
+					Title = title.Trim('"'),
+					EventStart = starttime,
+				};
+
 				ev.SetMessage(Msg);
 				ev.SetChannel(Msg.Channel);
-				ev.ChannelId = Msg.ChannelId;
 
-				await Msg.ModifyAsync(ev.CreateMessage());
+				_raidService.AddRaid(ev);
+
+				var newMessage = await ev.CreateMessage(_raidService);
+
+				await Msg.ModifyAsync(newMessage);
 				return;
 			}
 			else if (removeIndex != -1)

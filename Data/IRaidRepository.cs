@@ -12,12 +12,17 @@ namespace HaroldTheBot.Data
         RaidEvent GetRaidEvent(ulong raidId);
         IEnumerable<RaidEvent> GetAllRaidEvents();
         RaidParticipant GetParticipant(ulong raidId, string username);
+        RaidParticipant GetParticipant(ulong raidId, ulong userId);
         IEnumerable<RaidParticipant> GetParticipants(ulong raidId);
 
+        void SetRaidNotified(ulong raidId);
         void AddRaidEvent(RaidEvent ev);
         bool RemoveRaidEvent(ulong raidId);
 
+
         void AddParticipant(RaidParticipant participant);
-        bool RemoveParticipant(ulong raidId, string Username);
+        bool RemoveParticipant(ulong raidId, string username);
+        bool RemoveParticipant(ulong raidId, ulong userId);
+        bool HasParticipant(ulong raidId, ulong userId);
     }
 }
