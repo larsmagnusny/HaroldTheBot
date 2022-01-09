@@ -44,16 +44,18 @@ spec:
       containers:
       - name: haroldthebot
         image: larsmagnusny/haroldthebot:latest
+        env:
+        - name: DISCORD_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: discord_secrets
+              key: DISCORD_TOKEN
+        volumeMounts:
+        - mountPath: "/var/lib/haroldthebot/data"
+          name: haroldthebot-pv
       volumes:
       - name: haroldthebot-pv-storage
         persistentVolumeClaim:
           claimName: haroldthebot-pvc
-      env:
-      - name: DISCORD_TOKEN
-        valueFrom:
-          secretKeyRef:
-            name: discord_secrets
-            key: DISCORD_TOKEN
-    volumeMounts:
-      - mountPath: "/var/lib/haroldthebot/data"
-        name: haroldthebot-pv
+      
+    
