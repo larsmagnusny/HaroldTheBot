@@ -232,9 +232,10 @@ namespace HaroldTheBot.Raids
             string message;
             string eventStart = EventStart.ToString("dd/MM/yyyy HH:mm:ss");
 
+
             if (!Expired)
             {
-                message = $"The raid {Title} is starting at {eventStart} ST for {RaidMonitorer.GetSurgeonRole().Mention}";
+                message = $"The raid {Title} is starting at {eventStart} ST for {DiscordUtils.GetSurgeonRole().Mention}";
             }
             else
             {
@@ -267,37 +268,34 @@ namespace HaroldTheBot.Raids
         {
             DiscordEmoji emojiToRemove = null;
 
-            lock (RaidStorage.eventLock)
+            DiscordMember member = null;
+            string NickName = e.User.Username;
+
+            if (e.User.Presence == null)
+                member = null;
+            else if (e.User.Presence.Guild != null)
+                e.User.Presence.Guild.Members.TryGetValue(e.User.Id, out member);
+
+            if (!Enum.TryParse(typeof(Job), e.Emoji.Name.Trim(':'), out object job))
+                return;
+
+            if (member != null && !string.IsNullOrEmpty(member.Nickname))
+                NickName = member.Nickname;
+
+            if (Participants.ContainsKey(e.User.Id))
             {
-                DiscordMember member = null;
-                string NickName = e.User.Username;
+                var prevParticipation = Participants[e.User.Id];
 
-                if (e.User.Presence == null)
-                    member = null;
-                else if (e.User.Presence.Guild != null)
-                    e.User.Presence.Guild.Members.TryGetValue(e.User.Id, out member);
+                emojiToRemove = DiscordEmoji.FromName(s, string.Concat(":", prevParticipation.Role.ToString(), ":"));
 
-                if (!Enum.TryParse(typeof(Job), e.Emoji.Name.Trim(':'), out object job))
-                    return;
-
-                if (member != null && !string.IsNullOrEmpty(member.Nickname))
-                    NickName = member.Nickname;
-
-                if (Participants.ContainsKey(e.User.Id))
-                {
-                    var prevParticipation = Participants[e.User.Id];
-
-                    emojiToRemove = DiscordEmoji.FromName(s, string.Concat(":", prevParticipation.Role.ToString(), ":"));
-
-                    Participants.Remove(e.User.Id);
-                }
-
-                Participants.Add(e.User.Id, new RaidParticipant
-                {
-                    Role = (Job)job,
-                    Username = NickName
-                });
+                Participants.Remove(e.User.Id);
             }
+
+            Participants.Add(e.User.Id, new RaidParticipant
+            {
+                Role = (Job)job,
+                Username = NickName
+            });
 
             if (emojiToRemove != null && message != null)
                 await message.DeleteReactionAsync(emojiToRemove, e.User);
@@ -307,27 +305,24 @@ namespace HaroldTheBot.Raids
 
         public async void ReactionRemoved(DiscordClient s, MessageReactionRemoveEventArgs e, DiscordMessage message)
         {
-            lock (RaidStorage.eventLock)
-            {
-                DiscordMember member = null;
-                string NickName = e.User.Username;
+            DiscordMember member = null;
+            string NickName = e.User.Username;
 
-                if (e.User.Presence == null)
-                    member = null;
-                else if (e.User.Presence.Guild != null)
-                    e.User.Presence.Guild.Members.TryGetValue(e.User.Id, out member);
+            if (e.User.Presence == null)
+                member = null;
+            else if (e.User.Presence.Guild != null)
+                e.User.Presence.Guild.Members.TryGetValue(e.User.Id, out member);
 
-                if (member != null && !string.IsNullOrEmpty(member.Nickname))
-                    NickName = member.Nickname;
+            if (member != null && !string.IsNullOrEmpty(member.Nickname))
+                NickName = member.Nickname;
 
-                if (!Participants.ContainsKey(e.User.Id))
-                    return;
+            if (!Participants.ContainsKey(e.User.Id))
+                return;
 
-                RaidParticipant participant = Participants[e.User.Id];
+            RaidParticipant participant = Participants[e.User.Id];
 
-                if (participant.Role.ToString() == e.Emoji.Name.Trim(':'))
-                    Participants.Remove(e.User.Id);
-            }
+            if (participant.Role.ToString() == e.Emoji.Name.Trim(':'))
+                Participants.Remove(e.User.Id);
 
             await message.ModifyAsync(CreateMessage());
         }

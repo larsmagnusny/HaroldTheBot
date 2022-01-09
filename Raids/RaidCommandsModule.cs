@@ -10,6 +10,13 @@ namespace HaroldTheBot.Raids
 {
 	public class RaidCommandsModule : BaseCommandModule
 	{
+		private readonly IRaidService _raidService;
+
+		public RaidCommandsModule(IRaidService raidService)
+        {
+			_raidService = raidService;
+        }
+
 		private readonly string help =
 @"
 ""/raid"" takes these parameters
@@ -23,8 +30,9 @@ remove [id] - Remove a raid event
 -r                    - Recurring
 Example: raid new -t ""RaidName"" -dt " + DateTime.UtcNow.ToString("dd/MM/yyyy HH:mm:ss")+@" -r
 Example: raid remove [id]";
+        
 
-		[Command("raid")]
+        [Command("raid")]
 		[Description("@participants to get ready to raid")]
 		public async Task Raid(CommandContext ctx, params string[] args)
 		{
@@ -100,7 +108,7 @@ Example: raid remove [id]";
 				
 				var Msg = await ctx.RespondAsync("Creating raid...");
 
-				var ev = RaidStorage.AddRaid(Msg.Id, title.Trim('"'), starttime);
+				var ev = _raidService.AddRaid(Msg.Id, title.Trim('"'), starttime);
 				
 				ev.SetMessage(Msg);
 				ev.SetChannel(Msg.Channel);
@@ -120,8 +128,8 @@ Example: raid remove [id]";
 				try
 				{
 					ulong id = ulong.Parse(args[removeIndex + 1]);
-					var raid = RaidStorage.GetRaid(id);
-					var removed = RaidStorage.RemoveRaid(id);
+					var raid = _raidService.GetRaid(id);
+					var removed = _raidService.RemoveRaid(id);
 
                     if (!removed || raid == null)
                     {

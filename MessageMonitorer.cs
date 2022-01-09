@@ -10,15 +10,21 @@ using System.Threading.Tasks;
 
 namespace HaroldTheBot
 {
-    public static class MessageMonitorer
+    public class MessageMonitorer : IMessageMonitorer
     {
-        private static readonly Dictionary<string, StringComparison> StringBlacklist = new()
+        private readonly IRaidService _raidService;
+        public MessageMonitorer(IRaidService raidService)
+        {
+            _raidService = raidService;
+        }
+
+        private readonly Dictionary<string, StringComparison> StringBlacklist = new()
         {
             { "WoW", StringComparison.Ordinal },
             { "World of Warcraft", StringComparison.OrdinalIgnoreCase }
         };
 
-        public static async void ReactionRemoved(DiscordClient s, MessageReactionRemoveEventArgs e)
+        public async void ReactionRemoved(DiscordClient s, MessageReactionRemoveEventArgs e)
         {
             var message = e.Message;
             if (message.Content == null)
@@ -26,25 +32,13 @@ namespace HaroldTheBot
                 message = await e.Channel.GetMessageAsync(e.Message.Id);
             }
 
-            RaidEvent ev;
-            VoteEvent vev;
-
-            lock (RaidStorage.eventLock)
-            {
-                ev = RaidStorage.GetRaid(message.Id);
-            }
-            lock (VoteStorage.voteLock)
-            {
-                vev = VoteStorage.GetVote(message.Id);
-            }
+            var ev = _raidService.GetRaid(message.Id); ;
 
             if (ev != null)
                 ev.ReactionRemoved(s, e, message);
-            if (vev != null)
-                vev.ReactionRemoved(s, e, message);
         }
 
-        public static async void ReactionAdded(DiscordClient s, MessageReactionAddEventArgs e)
+        public async void ReactionAdded(DiscordClient s, MessageReactionAddEventArgs e)
         {
             var message = e.Message;
             if (message.Content == null)
@@ -52,25 +46,13 @@ namespace HaroldTheBot
                 message = await e.Channel.GetMessageAsync(e.Message.Id);
             }
 
-            RaidEvent ev;
-            VoteEvent vev;
-
-            lock (RaidStorage.eventLock)
-            {
-                ev = RaidStorage.GetRaid(message.Id);
-            }
-            lock (VoteStorage.voteLock)
-            {
-                vev = VoteStorage.GetVote(message.Id);
-            }
+            var ev = _raidService.GetRaid(message.Id);
 
             if (ev != null)
                 ev.ReactionAdded(s, e, message);
-            if (vev != null)
-                vev.ReactionAdded(s, e, message);
         }
 
-        public static async void MessageCreated(DiscordClient s, MessageCreateEventArgs e)
+        public async void MessageCreated(DiscordClient s, MessageCreateEventArgs e)
         {
             if (e.Message.Author.Username == "HaroldTheBot")
                 return;

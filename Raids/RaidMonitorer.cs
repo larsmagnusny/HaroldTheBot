@@ -8,64 +8,48 @@ using System.Threading.Tasks;
 
 namespace HaroldTheBot.Raids
 {
-    public static class RaidMonitorer
+    public class RaidMonitorer : IRaidMonitorer
     {
-        public static DiscordRole GetSurgeonRole()
+        private readonly IRaidService _raidService;
+        public RaidMonitorer(IRaidService raidService)
         {
-            DiscordRole surgeon = null;
-
-            if (Program.DiscordClient == null)
-                return null;
-            if (Program.DiscordClient.Guilds == null)
-                return null;
-
-            foreach (var guild in Program.DiscordClient.Guilds)
-            {
-                foreach (var role in guild.Value.Roles)
-                {
-                    if (role.Value.Name == "Surgeon")
-                        surgeon = role.Value;
-                }
-            }
-
-            return surgeon;
+            _raidService = raidService;
         }
 
-        public static async void Run()
+        
+
+        public async void Run()
         {
             while (true)
             {
                 RaidEvent raidToNotify = null;
 
-                lock (RaidStorage.eventLock)
+                var raids = _raidService.GetRaids();
+
+                if (raids != null)
                 {
-                    var raids = RaidStorage.GetRaids();
+                    var now = DateTime.UtcNow;
+                    var tenMinutesAgo = DateTime.UtcNow.AddMinutes(10);
 
-                    if (raids != null)
+                    foreach (var raid in raids)
                     {
-                        var now = DateTime.UtcNow;
-                        var tenMinutesAgo = DateTime.UtcNow.AddMinutes(10);
+                        if (raid.Expired)
+                            continue;
 
-                        foreach (var raid in raids)
+                        raid.Expired = raid.EventStart < now;
+
+                        if (raid.Expired)
                         {
-                            if (raid.Expired)
-                                continue;
+                            raid.Notified = true;
+                            _ = raid.UpdateMessage();
+                        }
+                        if (!raid.Notified)
+                        {
+                            raid.Notified = raid.EventStart < tenMinutesAgo;
 
-                            raid.Expired = raid.EventStart < now;
-
-                            if (raid.Expired)
+                            if (raid.Notified)
                             {
-                                raid.Notified = true;
-                                _ = raid.UpdateMessage();
-                            }
-                            if (!raid.Notified)
-                            {
-                                raid.Notified = raid.EventStart < tenMinutesAgo;
-
-                                if (raid.Notified)
-                                {
-                                    raidToNotify = raid;
-                                }
+                                raidToNotify = raid;
                             }
                         }
                     }
@@ -73,12 +57,12 @@ namespace HaroldTheBot.Raids
 
                 if (raidToNotify != null)
                 {
-                    while (GetSurgeonRole() == null)
+                    while (DiscordUtils.GetSurgeonRole() == null)
                     {
                         Thread.Sleep(1000);
                     }
 
-                    var surgeon = GetSurgeonRole();
+                    var surgeon = DiscordUtils.GetSurgeonRole();
 
                     var channel = await raidToNotify.GetChannel();
 
