@@ -49,11 +49,11 @@ spec:
         persistentVolumeClaim:
           claimName: haroldthebot-pvc
       env:
-        - name: DISCORD_TOKEN
-          valueFrom:
-            secretKeyRef:
-              name: discord_secrets
-              key: DISCORD_TOKEN
+      - name: DISCORD_TOKEN
+        valueFrom:
+          secretKeyRef:
+            name: discord_secrets
+            key: DISCORD_TOKEN
       volumeMounts:
         - mountPath: "/var/lib/haroldthebot/data"
           name: haroldthebot-pv
