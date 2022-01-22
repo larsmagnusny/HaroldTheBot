@@ -19,12 +19,6 @@ namespace HaroldTheBot
             _serviceScopeFactory = serviceScopeFactory;
         }
 
-        private readonly Dictionary<string, StringComparison> StringBlacklist = new()
-        {
-            { "WoW", StringComparison.Ordinal },
-            { "World of Warcraft", StringComparison.OrdinalIgnoreCase }
-        };
-
         public async Task ReactionRemoved(DiscordClient s, MessageReactionRemoveEventArgs e)
         {
             var message = e.Message;
@@ -59,29 +53,6 @@ namespace HaroldTheBot
 
             if (ev != null)
                 ev.ReactionAdded(s, e, message, raidService);
-        }
-
-        public async Task MessageCreated(DiscordClient s, MessageCreateEventArgs e)
-        {
-            if (e.Message.Author.Username == "HaroldTheBot")
-                return;
-
-            bool triggered = false;
-            string triggerStr = "We don't talk about that in here";
-            foreach (var item in StringBlacklist)
-            {
-                if (e.Message.Content.Contains(item.Key, item.Value))
-                {
-                    triggered = true;
-                    break;
-                }
-            }
-
-            if (triggered)
-            {
-                await e.Message.RespondAsync(string.Concat("<@!", e.Message.Author.Id, "> ", triggerStr, ": ||~~", e.Message.Content, "~~||"));
-                await e.Message.DeleteAsync("Offensive Content");
-            }
         }
     }
 }

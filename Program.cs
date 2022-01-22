@@ -84,7 +84,6 @@ internal class Program
 
             DiscordClient.MessageReactionAdded += async (s, e) => await messageMonitorer.ReactionAdded(s, e);
             DiscordClient.MessageReactionRemoved += async (s, e) => await messageMonitorer.ReactionRemoved(s, e);
-            DiscordClient.MessageCreated += async (s, e) => await messageMonitorer.MessageCreated(s, e);
 
             // Build dependancies and then create the commands module.
             _commands = DiscordClient.UseCommandsNext(new CommandsNextConfiguration

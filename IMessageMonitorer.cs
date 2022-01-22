@@ -12,6 +12,5 @@ namespace HaroldTheBot
     {
         Task ReactionRemoved(DiscordClient s, MessageReactionRemoveEventArgs e);
         Task ReactionAdded(DiscordClient s, MessageReactionAddEventArgs e);
-        Task MessageCreated(DiscordClient s, MessageCreateEventArgs e);
     }
 }
